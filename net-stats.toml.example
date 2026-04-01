@@ -1,0 +1,9 @@
+refresh_ms = 1000
+
+[[interfaces]]
+alias = "wan"
+device = "eth0"
+
+[[interfaces]]
+alias = "wifi"
+device = "wlan0"
