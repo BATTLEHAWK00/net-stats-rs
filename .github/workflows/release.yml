@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --locked --release
+
+      - name: Package archive
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist
+          ARCHIVE_NAME="net-stats-tui-${TAG_NAME:-manual}-x86_64-unknown-linux-gnu"
+          cp target/release/net-stats-tui "dist/${ARCHIVE_NAME}"
+          cp net-stats.toml.example dist/
+          cp README.md dist/
+          tar -czf "${ARCHIVE_NAME}.tar.gz" -C dist "${ARCHIVE_NAME}" net-stats.toml.example README.md
+
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: net-stats-tui-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz
